@@ -1,29 +1,31 @@
 import pandas as pd
 from pathlib import Path
 
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = PROJECT_ROOT / "messy-data"
+DATA_DIR = PROJECT_ROOT / "messy_data"
+CACHE_DIR = PROJECT_ROOT / "cache"
+CACHE_DIR.mkdir(exist_ok=True)
 
+def load_or_cache(filename, sheet_name):
+    cache_file = CACHE_DIR / f"{Path(filename).stem}_{sheet_name}.parquet"
+    if cache_file.exists():
+        return pd.read_parquet(cache_file)
+    print(f"  Caching {filename} [{sheet_name}]...")
+    df = pd.read_excel(DATA_DIR / filename, sheet_name=sheet_name)
+    df.to_parquet(cache_file, index=False)
+    return df
 
-business_claims_freq = pd.read_excel(DATA_DIR / "srcsc-2026-claims-business-interruption.xlsx" , sheetname=freq)
-business_claims_sev = pd.read_excel(DATA_DIR / "srcsc-2026-claims-business-interruption.xlsx" , sheetname=sev)
-cargo_claims_freq = pd.read_excel(DATA_DIR / "srcsc-2026-claims-cargo.xlsx", sheetname=freq)
-cargo_claims_sev = pd.read_excel(DATA_DIR / "srcsc-2026-claims-cargo.xlsx" , sheetname=sev)
-equipment_claims_freq = pd.read_excel(DATA_DIR / "srcsc-2026-claims-equipment-failure.xlsx", sheetname=freq)
-equipment_claims_sev = pd.read_excel(DATA_DIR / "srcsc-2026-claims-equipment-failure.xlsx", sheetname=sev)
-worker_claims_freq = pd.read_excel(DATA_DIR / "srcsc-2026-claims-workers-comp.xlsx", sheetname=freq)
-worker_claims_sev = pd.read_excel(DATA_DIR / "srcsc-2026-claims-workers-comp.xlsx", sheetname=sev)
-
-
-# Central registry
-messy_datasets = {
-    business_claims_freq : business_claims_freq,
-    business_claims_sev : business_claims_sev,
-    cargo_claims_freq : cargo_claims_freq,
-    cargo_claims_sev : cargo_claims_sev,
-    equipment_claims_freq : equipment_claims_freq,
-    equipment_claims_sev : equipment_claims_sev,
-    worker_claims_freq : worker_claims_freq,
-    worker_claims_sev : worker_claims_sev
+sources = {
+    "business": "srcsc-2026-claims-business-interruption.xlsx",
+    "cargo":    "srcsc-2026-claims-cargo.xlsx",
+    "equipment": "srcsc-2026-claims-equipment-failure.xlsx",
+    "worker":   "srcsc-2026-claims-workers-comp.xlsx",
 }
+
+messy_datasets = {
+    f"{name}_claims_{sheet}": load_or_cache(filename, sheet)
+    for name, filename in sources.items()
+    for sheet in ("freq", "sev")
+}
+
+print("Messy data successfully loaded!")
