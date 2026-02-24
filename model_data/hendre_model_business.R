@@ -1,0 +1,70 @@
+business_model_claims <- read.csv("C:/Users/hendr/OneDrive/Documents/Rocketeers_SOA/model_data/bussiness_claims_model_data.csv")
+
+str(business_model_claims)
+colSums(is.na(business_model_claims))
+summary(business_model_claims)
+
+# --- 1. Select numeric columns ---
+num_vars <- business_model_claims[, sapply(business_model_claims, is.numeric), drop = FALSE]
+
+# --- 2. Identify outliers using IQR method ---
+outlier_list <- lapply(num_vars, function(x) {
+  Q1          <- quantile(x, 0.25, na.rm = TRUE)
+  Q3          <- quantile(x, 0.75, na.rm = TRUE)
+  IQR_val     <- IQR(x, na.rm = TRUE)
+  lower_bound <- Q1 - 1.5 * IQR_val
+  upper_bound <- Q3 + 1.5 * IQR_val
+  which(x < lower_bound | x > upper_bound)
+})
+
+# --- 3. Count outliers per numeric variable ---
+outlier_counts <- sapply(outlier_list, length)
+print(outlier_counts)
+
+# --- 4. Extract actual outlier values ---
+outlier_values <- mapply(
+  function(col, idx) col[idx],
+  num_vars,
+  outlier_list,
+  SIMPLIFY = FALSE
+)
+
+# --- 5. Get all rows in the dataset that contain any outlier ---
+outlier_rows <- unique(unlist(outlier_list))
+
+if (length(outlier_rows) > 0) {
+  outlier_data <- business_model_claims[outlier_rows, ]
+  print(outlier_data)
+} else {
+  message("No outliers detected.")
+}
+
+# --- 6. Draw boxplots for each numeric variable ---
+n_cols <- ncol(num_vars)
+n_rows <- ceiling(n_cols / 2)
+
+# Open a larger window first (adjust width/height as needed)
+windows(width = 12, height = n_rows * 3)  # use quartz() on Mac, X11() on Linux
+
+par(mfrow = c(n_rows, 2),
+    mar   = c(2, 3, 2, 1),   # reduce margins: bottom, left, top, right
+    oma   = c(1, 1, 1, 1))   # reduce outer margins
+
+for (col_name in names(num_vars)) {
+  x_clean <- num_vars[[col_name]][!is.na(num_vars[[col_name]])]
+  boxplot(
+    x_clean,
+    main    = paste("Boxplot of", col_name),
+    ylab    = col_name,
+    col     = "lightblue",
+    outline = TRUE,
+    cex.main = 0.9,   # slightly smaller title text
+    cex.axis = 0.8    # slightly smaller axis text
+  )
+}
+# --- 7. (Optional) Single combined boxplot ---
+# boxplot(num_vars,
+#         main = "Boxplots of All Numeric Variables",
+#         las  = 2,
+#         col  = "lightblue",
+#         outline = TRUE)
