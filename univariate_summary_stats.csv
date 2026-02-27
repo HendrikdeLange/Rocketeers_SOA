@@ -1,0 +1,10 @@
+"variable","n","mean","median","sd","min","max","skew"
+"production_load",99923,0.5,0.5,0.29,0,1,0
+"energy_backup_score",99923,3,3,1.41,1,5,0
+"supply_chain_index",99923,0.5,0.5,0.29,0,1,0.01
+"avg_crew_exp",99923,15.53,16,8.65,1,30,-0.01
+"maintenance_freq",99923,2.99,3,2,0,6,0.01
+"safety_compliance",99923,3,3,1.41,1,5,0
+"exposure",99923,0.5,0.5,0.22,0.08,1,0.03
+"claim_count",99923,0.1,0,0.42,0,4,5.22
+"claim_amount",99923,439462.81,0,2991199.21,0,149590960,15.83
